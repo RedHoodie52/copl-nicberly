@@ -1,57 +1,99 @@
 import java.util.Scanner;
 
+class SyntaxChecker
+{
+    private int positie;
+    private String invoer;
+
+    public SyntaxChecker(String invoer){
+        this.invoer = invoer;
+        this.positie = 0;
+    }
+
+    private boolean isEinde(){
+        return positie >= invoer.length();
+    }
+
+    private char verwerk(){
+        if(!isEinde()){
+            return invoer.charAt(positie++);
+        }
+        throw new RuntimeException("Unexpected end of invoer");
+    }
+
+    private String variabele(){
+        StringBuilder varName = new StringBuilder();
+        while (!isEinde() && Character.isLetter(invoer.charAt(positie))) {
+            varName.append(verwerk());
+        }
+        return varName.toString();
+    }
+    
+    private boolean expr(){
+        if (!isEinde()){
+            char huidigeKar = invoer.charAt(positie);
+            if (huidigeKar == '('){
+                verwerk(); // verwerk '('
+                if (expr()){
+                    if (!isEinde() && invoer.charAt(positie) == ')'){
+                        verwerk(); // verwerk ')'
+                        return true;
+                    }
+                    else{
+                        throw new RuntimeException("Expected ')'");
+                    }
+                } else {
+                    throw new RuntimeException("Expected expression after '('");
+                }
+            }
+            else if (huidigeKar == '\\'){
+                verwerk(); // verwerk '\'
+                String varNaam = variabele();
+                if (!varNaam.isEmpty() && expr()){
+                    return true;
+                }
+            }
+            else{
+                String varNaam = variabele();
+                if (!varNaam.isEmpty()){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean parse() {
+        return expr() && isEinde();
+    }
+
+}
+
+
 class Main 
 {
     public static void main(String args[])
     {
-        Scanner obj = new Scanner(System.in);
-        System.out.println("Wat is de string invoer: ");
-        String invoer = obj.nextLine();
-
-        System.out.println("je hebt " + invoer + " ingevoerd.");
+        // Scanner obj = new Scanner(System.in);
+        // System.out.println("Wat is de string invoer: ");
+        // String invoer = obj.nextLine();
+        // public static int waardeHaakjes = 0;
         
-        int aantal = 0;
-        for (int i = 0; i < invoer.length(); i++)
-        {
-            if (invoer.charAt(i) = '(')
-            {
-                
-            }
-            
-            else if (invoer.charAt(i) = '(')
-            {
+        Scanner inv = new Scanner(System.in);
+        System.out.println("Wat is de invoer: ");
+        String invoer = inv.nextLine();
+        SyntaxChecker piemel = new SyntaxChecker(invoer);
 
-            }
-            else if (invoer.charAt(i) = '')
-            {
-                
-            }
-            else if (invoer.charAt(i) = ' ')
-            {
-                
-            }
-            else if (invoer.charAt(i) = ' ')
-            {
-                
-            }
+        if(piemel.parse()){
+            System.out.println("Accepted!"); 
         } 
-    }
-
-    public static boolean isAlphabetical(char c)
-    {
-        if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9'){
-            return true;
+        else {
+            System.out.println("REJECTED");
+            
         }
-        return false;
+    
     }
-}
-//invoer checken per karakter
-//
-
-
-
-// lexical analyzer
-class Lexer
-{
 
 }
+
+
