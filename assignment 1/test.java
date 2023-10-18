@@ -23,9 +23,16 @@ class SyntaxChecker
 
     private String variabele(){
         StringBuilder varName = new StringBuilder();
-        while (!isEinde() && Character.isLetter(invoer.charAt(positie))) {
+        while (!isEinde() && Character.isLetterOrDigit(invoer.charAt(positie))) {
             varName.append(verwerk());
         }
+
+        if (varName.length() > 0){
+            if (!Character.isLetter(varName.charAt(0))){
+                throw new RuntimeException("Eerste karakter van variabele is geen letter.");
+            }
+        }
+        
         return varName.toString();
     }
     
@@ -51,19 +58,42 @@ class SyntaxChecker
                 String varNaam = variabele();
                 if (!varNaam.isEmpty() && expr()){
                     return true;
-                }
+                } 
             }
-            else{
-                String varNaam = variabele();
+            else if (huidigeKar == ' '){
+                //System.out.println("Space found");
+                verwerk();
+                if (!isEinde()){
+                    return expr(); // return dit 
+                } else { 
+                    throw new RuntimeException("Trailing space found");
+                }
+            } else {
+                //System.out.println("Variable read");
+                String varNaam = "";
+                varNaam = variabele();
+
+                if (!isEinde()){
+                    huidigeKar = invoer.charAt(positie);
+                }
+
+                if (huidigeKar == ' '){
+                    verwerk();
+                    expr(); // hier ook 
+                }
+
                 if (!varNaam.isEmpty()){
                     return true;
                 }
             }
         }
+
         return false;
     }
 
     public boolean parse() {
+        // System.out.println(expr());
+        // System.out.println(isEinde());
         return expr() && isEinde();
     }
 
@@ -78,17 +108,19 @@ class Main
         // System.out.println("Wat is de string invoer: ");
         // String invoer = obj.nextLine();
         // public static int waardeHaakjes = 0;
+
+    
         
         Scanner inv = new Scanner(System.in);
         System.out.println("Wat is de invoer: ");
         String invoer = inv.nextLine();
-        SyntaxChecker piemel = new SyntaxChecker(invoer);
+        SyntaxChecker input = new SyntaxChecker(invoer);
 
-        if(piemel.parse()){
+        if(input.parse()){
             System.out.println("Accepted!"); 
         } 
         else {
-            System.out.println("REJECTED");
+            System.out.println("Rejected!");
             
         }
     
