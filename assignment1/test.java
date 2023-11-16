@@ -4,6 +4,7 @@ class SyntaxChecker
 {
     private int positie;
     private String invoer;
+    private int haakjes = 0;
 
     public SyntaxChecker(String invoer){
         this.invoer = invoer;
@@ -35,16 +36,59 @@ class SyntaxChecker
         
         return varName.toString();
     }
-    
+    // ((a))
     private boolean expr(){
         if (!isEinde()){
             char huidigeKar = invoer.charAt(positie);
             if (huidigeKar == '('){
+                haakjes++;
                 verwerk(); // verwerk '('
+                huidigeKar = invoer.charAt(positie);
                 if (expr()){
                     if (!isEinde() && invoer.charAt(positie) == ')'){
+                        haakjes--;
                         verwerk(); // verwerk ')'
-                        return true;
+                        if (isEinde()){
+                            return true;
+                        }
+                        else { // als niet einde
+                            huidigeKar = invoer.charAt(positie);    
+                            // if (huidigeKar == ')' && haakjes > 0){
+                            //     verwerk();
+                            //     huidigeKar = invoer.charAt(positie);
+                            // }
+
+                            while (huidigeKar == ')'){
+                                if (haakjes > 0){
+                                    verwerk(); // verwerk huidige ')'
+                                    haakjes--;
+
+                                    if (isEinde() && haakjes > 0){
+                                        throw new RuntimeException("Expected another ).")
+                                    }
+                                    huidigeKar = invoer.charAt(positie);
+                                    
+        
+                                }
+                            }
+
+                            // if(haakjes == 0){
+                            //     return true;
+                            // }
+
+                            return expr();
+                        }
+                        
+
+                        // ((a))
+
+                        // huidigeKar = invoer.charAt(positie)
+                        
+                        // if(huidigeKar == ')' && haakjes != 0 ){
+                        //     verwerk();
+                        
+                        // } 
+                        // (\x (a) (b))
                     }
                     else{
                         throw new RuntimeException("Expected ')'");
@@ -54,24 +98,41 @@ class SyntaxChecker
                 }
             }
             else if (huidigeKar == '\\'){
-                verwerk(); // verwerk '\'
+                verwerk();
+                huidigeKar = invoer.charAt(positie);
+        
+                while(huidigeKar == ' '){
+                    verwerk();
+                    huidigeKar = invoer.charAt(positie);
+                }
                 String varNaam = variabele();
                 if (!varNaam.isEmpty() && expr()){
                     return true;
-                } 
+                }
             }
             else if (huidigeKar == ' '){
                 //System.out.println("Space found");
                 verwerk();
+                huidigeKar = invoer.charAt(positie);
                 if (!isEinde()){
                     return expr(); // return dit 
                 } else { 
                     throw new RuntimeException("Trailing space found");
                 }
+            } else if (huidigeKar == ')'){
+                if (haakjes > 0){
+                    haakjes--;
+                    verwerk();
+                    if (!isEinde()){
+                        huidigeKar = invoer.charAt(positie);
+                    }
+                }
+                
             } else {
-                //System.out.println("Variable read");
                 String varNaam = "";
                 varNaam = variabele();
+
+                System.out.println(huidigeKar);    
 
                 if (!isEinde()){
                     huidigeKar = invoer.charAt(positie);
@@ -79,12 +140,15 @@ class SyntaxChecker
 
                 if (huidigeKar == ' '){
                     verwerk();
+                    huidigeKar = invoer.charAt(positie);
                     expr(); // hier ook 
                 }
 
                 if (!varNaam.isEmpty()){
                     return true;
                 }
+
+                // return expr();
             }
         }
 
