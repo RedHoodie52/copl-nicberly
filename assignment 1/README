@@ -1,7 +1,0 @@
-Student number(s): 3692949, YYYYY
-
-Program Status: The program has been tested and works correctly.
-
-Deviations from the Assignment: None.
-
-Explanation: This program is a simple lexer and parser for the lambda calculus. It reads an expression, lexically analyzes it into tokens, parses the token string, and then outputs a standard format string. Syntax errors are detected and reported.
