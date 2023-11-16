@@ -58,23 +58,24 @@ class SyntaxChecker
                             //     huidigeKar = invoer.charAt(positie);
                             // }
 
-                            while (huidigeKar == ')'){
+                            while (huidigeKar == ')' && haakjes != 0){
                                 if (haakjes > 0){
                                     verwerk(); // verwerk huidige ')'
                                     haakjes--;
 
-                                    if (isEinde() && haakjes > 0){
-                                        throw new RuntimeException("Expected another ).")
+                                    if (isEinde() && haakjes != 0){
+                                        throw new RuntimeException("Expected another ).");  
                                     }
-                                    huidigeKar = invoer.charAt(positie);
-                                    
-        
                                 }
-                            }
+                                if (!isEinde()){
+                                    huidigeKar = invoer.charAt(positie);
+                                }
+                                    
+                            }   
 
-                            // if(haakjes == 0){
-                            //     return true;
-                            // }
+                            if (isEinde()){
+                                return true;
+                            }
 
                             return expr();
                         }
