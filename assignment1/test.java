@@ -1,155 +1,133 @@
 import java.util.Scanner;
+import java.io.*;
 
 class SyntaxChecker
 {
     private int positie;
     private String invoer;
-    private int haakjes = 0;
+    private String parsed;
+    private int haakjes;
 
     public SyntaxChecker(String invoer){
         this.invoer = invoer;
+        this.parsed = "";
         this.positie = 0;
+        this.haakjes = 0;
+    }
+
+    public String getParsed(){
+        return this.parsed;
     }
 
     private boolean isEinde(){
         return positie >= invoer.length();
     }
 
-    private char verwerk(){
+    private char verwerk(boolean valid){
         if(!isEinde()){
+            if (valid){
+                // parsed += invoer.charAt(positie); // TODO: geparsede invoer returnen
+            }
+                
             return invoer.charAt(positie++);
         }
         throw new RuntimeException("Unexpected end of invoer");
     }
 
     private String variabele(){
-        StringBuilder varName = new StringBuilder();
+        StringBuilder var = new StringBuilder();
         while (!isEinde() && Character.isLetterOrDigit(invoer.charAt(positie))) {
-            varName.append(verwerk());
+            var.append(verwerk(true));
         }
 
-        if (varName.length() > 0){
-            if (!Character.isLetter(varName.charAt(0))){
+        if (var.length() > 0){
+            if (!Character.isLetter(var.charAt(0))){
                 throw new RuntimeException("Eerste karakter van variabele is geen letter.");
             }
         }
         
-        return varName.toString();
+        return var.toString();
     }
-    // ((a))
+
     private boolean expr(){
-        if (!isEinde()){
-            char huidigeKar = invoer.charAt(positie);
-            if (huidigeKar == '('){
-                haakjes++;
-                verwerk(); // verwerk '('
-                huidigeKar = invoer.charAt(positie);
-                if (expr()){
-                    if (!isEinde() && invoer.charAt(positie) == ')'){
-                        haakjes--;
-                        verwerk(); // verwerk ')'
-                        if (isEinde()){
-                            return true;
-                        }
-                        else { // als niet einde
-                            huidigeKar = invoer.charAt(positie);    
-                            // if (huidigeKar == ')' && haakjes > 0){
-                            //     verwerk();
-                            //     huidigeKar = invoer.charAt(positie);
-                            // }
+        if (isEinde()){
+            return false;
+        }
 
-                            while (huidigeKar == ')' && haakjes != 0){
-                                if (haakjes > 0){
-                                    verwerk(); // verwerk huidige ')'
-                                    haakjes--;
+        char huidigeKar = invoer.charAt(positie);
 
-                                    if (isEinde() && haakjes != 0){
-                                        throw new RuntimeException("Expected another ).");  
-                                    }
-                                }
-                                if (!isEinde()){
-                                    huidigeKar = invoer.charAt(positie);
-                                }
-                                    
-                            }   
-
-                            if (isEinde()){
-                                return true;
-                            }
-
-                            return expr();
-                        }
-                        
-
-                        // ((a))
-
-                        // huidigeKar = invoer.charAt(positie)
-                        
-                        // if(huidigeKar == ')' && haakjes != 0 ){
-                        //     verwerk();
-                        
-                        // } 
-                        // (\x (a) (b))
-                    }
-                    else{
-                        throw new RuntimeException("Expected ')'");
-                    }
-                } else {
-                    throw new RuntimeException("Expected expression after '('");
-                }
+        if (huidigeKar == '('){
+            haakjes++;
+            huidigeKar = verwerk(true);
+            if (isEinde()){
+                return false; // geen karakters na (
             }
-            else if (huidigeKar == '\\'){
-                verwerk();
-                huidigeKar = invoer.charAt(positie);
-        
-                while(huidigeKar == ' '){
-                    verwerk();
-                    huidigeKar = invoer.charAt(positie);
-                }
-                String varNaam = variabele();
-                if (!varNaam.isEmpty() && expr()){
-                    return true;
-                }
-            }
-            else if (huidigeKar == ' '){
-                //System.out.println("Space found");
-                verwerk();
-                huidigeKar = invoer.charAt(positie);
-                if (!isEinde()){
-                    return expr(); // return dit 
-                } else { 
-                    throw new RuntimeException("Trailing space found");
-                }
-            } else if (huidigeKar == ')'){
-                if (haakjes > 0){
-                    haakjes--;
-                    verwerk();
-                    if (!isEinde()){
-                        huidigeKar = invoer.charAt(positie);
-                    }
+
+            if (expr()){
+                if (isEinde()){
+                    throw new RuntimeException(" Expected ')' "); 
                 }
                 
+                if (invoer.charAt(positie) == ')'){
+                    haakjes--;
+                    verwerk(true);
+                    // VVV  haakjes > 0 &&  
+                    if ( !isEinde() && invoer.charAt(positie) != ')' ){
+                        return expr(); 
+                    }
+
+                    return true;    
+                }
+
             } else {
-                String varNaam = "";
-                varNaam = variabele();
+                throw new RuntimeException(" Expected expression after '(' "); 
+            }
+        } else if (huidigeKar == '\\'){
+            huidigeKar = verwerk(true); // verwerk de '\'
+    
+            while(huidigeKar == ' '){
+                huidigeKar = verwerk(true);
+            }
 
-                System.out.println(huidigeKar);    
-
-                if (!isEinde()){
-                    huidigeKar = invoer.charAt(positie);
-                }
-
-                if (huidigeKar == ' '){
-                    verwerk();
-                    huidigeKar = invoer.charAt(positie);
-                    expr(); // hier ook 
-                }
-
-                if (!varNaam.isEmpty()){
+            String varNaam = variabele();
+            if (!varNaam.isEmpty() && expr()){
+                return true;
+            }
+        } else if (huidigeKar == ' '){
+            huidigeKar =  verwerk(true);
+            if (!isEinde()){
+                return expr();
+            } else { 
+                throw new RuntimeException("Trailing space found");
+            }
+        } else if (huidigeKar == ')'){
+            haakjes--;
+            verwerk(true);       // verwerk de ')' 
+            if (isEinde()){
+                return true;
+            }else{
+                if (expr()){
                     return true;
+                } else {
+                    throw new RuntimeException("No expression after )");
                 }
+            }
+        } else {
+            String varNaam = "";
+            varNaam = variabele();
 
-                // return expr();
+            if (!isEinde()){
+                huidigeKar = invoer.charAt(positie);
+            }
+
+            if (huidigeKar == ' '){
+                huidigeKar = verwerk(false);
+                expr(); 
+            }
+
+            if (!varNaam.isEmpty()){
+                // System.out.println(varNaam);    
+                return true;
             }
         }
 
@@ -157,11 +135,9 @@ class SyntaxChecker
     }
 
     public boolean parse() {
-        // System.out.println(expr());
-        // System.out.println(isEinde());
+        invoer = invoer.trim(); // Removes trailing and leading whitespace
         return expr() && isEinde();
     }
-
 }
 
 
@@ -169,11 +145,6 @@ class Main
 {
     public static void main(String args[])
     {
-        // Scanner obj = new Scanner(System.in);
-        // System.out.println("Wat is de string invoer: ");
-        // String invoer = obj.nextLine();
-        // public static int waardeHaakjes = 0;
-
         Scanner inv = new Scanner(System.in);
         System.out.println("Wat is de invoer: ");
         String invoer = inv.nextLine();
@@ -181,14 +152,12 @@ class Main
 
         if(input.parse()){
             System.out.println("Accepted!"); 
+            // System.out.println(input.getParsed());
         } 
         else {
-            System.out.println("Rejected!");
-            
+            System.out.println("Rejected!");   
         }
-    
     }
-
 }
 
 
