@@ -108,8 +108,6 @@ class SyntaxChecker
             }else{
                 if (expr()){
                     return true;
-                } else {
-                    throw new RuntimeException("No expression after )");
                 }
             }
         } else {
