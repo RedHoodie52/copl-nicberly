@@ -17,7 +17,7 @@ class Node
     }
 
     public String getContent(){
-        return this.content;
+        return this.content; 
     }
 
     public Node getLeft(){
@@ -51,28 +51,17 @@ class SyntaxTree
         this.expr = newExpr;
         this.index = 0;
         this.root = parseExpression(newExpr);
-
-        while (expr.length() > 0){
-            this.root = parseExpression(expr);
-        }
-        //System.out.println(newExpr);
     }
 
     public Node parseVariable (){
         StringBuilder var = new StringBuilder();
        
-
-        while(index < expr.length() && Character.isLetterOrDigit(expr.charAt(index))){
+        while (index < expr.length() && Character.isLetterOrDigit(expr.charAt(index))){
             var.append(expr.charAt(index));
             index++;
         }
         
-        if (index < expr.length()){       // CHECK ABC DEF GHI
-            expr = expr.substring(index); //
-           
-            
-        }
-        
+        expr = expr.substring(index);
         index = 0;
         Node varNode = new Node(var.toString());
         
@@ -104,9 +93,7 @@ class SyntaxTree
     
     public Node parseExpression (String newExpr){
         Node newRoot = new Node("");
-        Character huidigeKar = expr.charAt(index);
-
-        //System.out.println(huidigeKar + " - " + expr + " - " + index);
+        Character huidigeKar = newExpr.charAt(index);
 
         if (huidigeKar == '\\'){
             index++;
@@ -114,12 +101,8 @@ class SyntaxTree
 
             index = 0;
             newRoot = parseLambda();
-            
-            return newRoot;
         } else if (Character.isLetter(huidigeKar)) {
             newRoot = parseVariable();
-
-            return newRoot;
         } else if (huidigeKar == '(') {
             index++;
             expr = newExpr.substring(index);
@@ -130,18 +113,27 @@ class SyntaxTree
             index++;
             expr = expr.substring(index);
 
+            index = 0;
+
+            System.out.println(expr);
+        }
+        
+        if (index >= expr.length()){
             return newRoot;
-        } else if (huidigeKar == ' '){
+        }
+
+        huidigeKar = expr.charAt(index);
+        
+        if (huidigeKar == ' '){        
             Node connectorNode = new Node("+");
-            Node leftNode = root;
-
-            index++;
-            expr = newExpr.substring(index);      
-
+            Node leftNode = newRoot;
+            
+            expr = expr.substring(1);  // Spatie verwerken    
             
             Node rightNode = parseExpression(expr);
             
             if (leftNode != null){
+                System.out.println();
                 connectorNode.setLeft(leftNode);
             }
 
@@ -149,92 +141,62 @@ class SyntaxTree
                 connectorNode.setRight(rightNode);
             }
 
-            root = connectorNode;
-
-            System.out.println(expr + " " + index);
-
-            return root;
+            newRoot = connectorNode;
         }
-
-
-        
-
-        //expr == var || (expr) || expr expr || \var expr
-
-        // if(huidigeKar == '\\'){
-        //     if (volgendeKar != )
-        //     // newRoot.left = expr.charAt(tel + 1);
-        //     // newRoot.left = expr.charAt(tel + 2);
-        //     // \abc (\x y)
-        //     //  (<expr> <expr)
-        // }
-        // else if(huidigeKar = ){
-            
-        // }
-
-        // abc \x abc def
-            //      +
-            // abc      +
-            //      ()     def
-            
-            //      +
-            // abc    
-
-            // ________________
-            //|                | 
-            //|    ebe         | 
-            //|                | 
-            //|________________| <-- keuken
-
-            // wat s het probleeem ook alweer
-            // abc def 
-
-            // 
-
 
         return newRoot;
     }
 
     public String getRootContent(){
-        // System.out.println("Root content printed");
         return root.getContent();
     }
+
+    public void printTree(Node top){
+        System.out.println(top.getContent());
+        
+        if(top.getLeft() != null){
+            printTree(top.getLeft());
+        }
+        
+        if (top.getRight() != null){
+            printTree(top.getRight());
+        }
+    }
+
+    public void betaReduction(Node root){
+    if (root.getContent() == "\\") { // als lambda 
+        Node varNode = root.getLeft();
+        if (varNode.getContent().equals("x")) { // als linker kind matched met bound variable 
+            root.setLeft(root.getRight());
+            if (root.getRight() != null) {
+                root.setContent(root.getRight().getContent());
+            } else {
+                root.setContent("");
+            }
+        }
+    }
 }
-
-
+}
 
 class Main 
 {
     public static void main(String args[])
     {
-        // inlezen
-        String input = "abc def ghi";
+        String input = "(\\x x) (\\y y)";  
+
+        System.out.println(input);
 
         SyntaxTree boom = new SyntaxTree(input);
-        System.out.println(boom.root.getContent());
-        System.out.println(boom.root.getLeft().getContent());
-        System.out.println(boom.root.getLeft().getLeft().getContent());
-        System.out.println(boom.root.getLeft().getRight().getContent());
-        System.out.println(boom.root.getRight().getContent());
 
+        if (boom.root != null){
+            boom.printTree(boom.root);
+        }
 
-        // String fileName = "input.txt";
-        
-        // BufferedReader reader = new BufferedReader(new FileReader(fileName));
-        // String line;
-        // if (line != null){
-        //     System.out.println(line);
-        // }
-        // reader.close();
+        boom.betaReduction(boom.root);
+        if (boom.root != null){
+            System.out.println("AST na BETA");
+            boom.printTree(boom.root);
+        }
 
-        // ----------------------------------------------------------------------------------------------------
-
-        // if(input.parse()){
-        //     System.out.println("Accepted!"); 
-        //     // System.out.println(input.getParsed());
-        // } 
-        // else {
-        //     System.out.println("Rejected!");   
-        // }
     }
 }
